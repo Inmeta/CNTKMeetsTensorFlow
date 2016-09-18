@@ -1,0 +1,134 @@
+rootDir = "."
+
+dataDir   = "$rootDir$/../../Data"
+modelDir  = "$rootDir$/Models"
+stderr    = "log_01"
+
+deviceId = 0
+precision = "float"
+modelPath = "$modelDir$/01_OneHidden"
+
+traceLevel = 1
+numMBsToShowResult = 500
+
+command = train:test:Output
+
+#######################################
+#  TRAINING CONFIG                    #
+#######################################
+
+train = [
+    action = "train"
+
+    BrainScriptNetworkBuilder = {
+
+        featDim = 28 * 28   # number of pixels
+        labelDim = 10       # number of distinct labels
+		hiddenDim = 200     # hidden layer size
+		
+        features = Input (featDim)
+        featScaled = Constant (1.0 / 256.0) .* features
+        labels = Input (labelDim)      
+
+		# linear layer (no non-linearity)
+		DNNLayer (inDim, outDim, x, parmScale) = [
+			W = Parameter (outDim, inDim, init="uniform", initValueScale=parmScale)
+			b = Parameter (outDim, 1,     init="fixedValue", value=0)
+			z = W * x + b
+		].z
+		
+		# sigmoid layer
+		DNNSigmoidLayer (inDim, outDim, x, parmScale) = Sigmoid (DNNLayer (inDim, outDim, x, parmScale))
+        
+        h1 = DNNSigmoidLayer (featDim,  hiddenDim, featScaled, 1)
+        z  = DNNLayer        (hiddenDim, labelDim, h1,         1)
+		P = Softmax(z)
+
+        ce   = CrossEntropyWithSoftmax (labels, z)
+        errs = ClassificationError     (labels, z)
+
+        # set top5Errs as an evaluation node to compute the top-5 error rate
+        # This is not marked tag="evaluation" since expensive during training.
+        # We explicitly select it as an output node in the "test" command.
+        # top5Errs = ClassificationError (labels, z, topN=5)
+
+        # declare special nodes
+        featureNodes    = (features)
+        labelNodes      = (labels)
+        criterionNodes  = (ce)
+        evaluationNodes = (errs)
+        outputNodes     = (P)
+    }
+
+    SGD = [
+        epochSize = 60000
+        minibatchSize = 32
+        learningRatesPerSample = 0.0063 #0.003125
+        momentumAsTimeConstant = 0
+        maxEpochs = 15
+		keepCheckPointFiles = true		
+    ]
+
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/Train-28x28_cntk_text.txt"
+        input = [
+            features = [
+                dim = 784
+                format = "dense"
+            ]
+            labels = [
+                dim = 10
+                format = "dense"
+            ]
+        ]
+    ]   
+]
+
+#######################################
+#  TEST CONFIG                        #
+#######################################
+
+test = [
+    action = "test"
+    minibatchSize = 1024    # reduce this if you run out of memory
+
+    evalNodeNames = errs
+
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/Test-28x28_cntk_text.txt"
+        input = [
+            features = [
+                dim = 784
+                format = "dense"
+            ]
+            labels = [
+                dim = 10
+                format = "dense"
+            ]
+        ]
+    ]
+]
+#######################################
+#  OUTPUT CONFIG                        #
+#######################################
+Output = [
+    action = "write"
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "$DataDir$/Test-28x28_cntk_text.txt"
+        input = [
+            features = [
+            dim = 784
+            format = "dense"
+            ]
+            labels = [
+                dim = 10
+                format = "dense"
+            ]
+        ]
+    ]
+    outputPath = "$rootDir$/01.out.txt"  # dump the output to this text file
+]
+

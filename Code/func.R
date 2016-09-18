@@ -1,4 +1,5 @@
 library(ggplot2)
+library(moments)
 
 panel.hist <- function(x, ...) {
     usr <- par("usr");

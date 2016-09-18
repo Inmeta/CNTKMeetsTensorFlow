@@ -1,0 +1,101 @@
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+# which commands to run
+command=Train:Output:DumpNodeInfo:Test
+
+# required...
+modelPath = "Models/simpleNet.dnn"  # where to write the model to
+deviceId = -1                    # -1 means CPU; use 0 for your first GPU, 1 for the second etc.
+dimension = 2                    # input data dimensions
+
+# training config
+Train = [             # command=Train --> CNTK will look for a parameter named Train
+    action = "train"  # execute CNTK's 'train' routine
+        
+    # network description
+	
+	SimpleNetworkBuilder = [
+		layerSizes = $dimension$:1
+		trainingCriterion = "SquareError"
+		evalCriterion = "SquareError"
+		layerTypes = "RectifiedLinear"
+	]
+	
+    # configuration parameters of the SGD procedure
+    SGD = [
+        epochSize = 0                  # =0 means size of the training set
+        minibatchSize = 20
+        learningRatesPerSample = 0.01  # gradient contribution from each sample
+        maxEpochs = 10
+		keepCheckPointFiles = false
+		AutoAdjust=[             
+            reduceLearnRateIfImproveLessThan=0.05       
+            learnRateDecreaseFactor=0.9
+            autoAdjustLR=AdjustAfterEpoch
+        ]
+    ]
+
+    # configuration of data reading
+    reader = [
+
+        readerType = "CNTKTextFormatReader"
+        file = "..\Data\LR.train.txt"
+
+        input = [
+            features = [
+                dim = $dimension$
+                format = "dense"
+            ]
+            labels = [
+                dim = 1
+                format = "dense"
+            ]
+        ]
+    ]
+]
+
+# test
+Test = [
+    action = "test"
+	reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "..\Data\LR.test.txt"
+        input = [
+            features = [
+                dim = $dimension$
+                format = "dense"
+            ]
+            labels = [
+                dim = 1
+                format = "dense"
+            ]
+        ]
+    ]
+]
+
+# output the results
+Output = [
+    action = "write"
+    reader = [
+        readerType = "CNTKTextFormatReader"
+        file = "..\Data\LR.test.txt"
+        input = [
+            features = [
+                dim = $dimension$  # $$ means variable substitution
+                format = "dense"
+            ]
+            labels = [
+                dim = 1            # label has 1 dimension
+                format = "dense"
+            ]
+        ]
+    ]
+    outputPath = "Output\simpleNet.out.txt"  # dump the output to this text file
+]
+
+# dump parameter values
+DumpNodeInfo = [
+    action = "dumpNode"
+    printValues = true
+]

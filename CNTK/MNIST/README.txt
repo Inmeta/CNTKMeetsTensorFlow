@@ -1,0 +1,1 @@
+cntk configFile=01_OneHidden.my.cntk

@@ -40,7 +40,7 @@ Train = [             # command=Train --> CNTK will look for a parameter named T
     reader = [
 
         readerType = "CNTKTextFormatReader"
-        file = "..\Data\LR.train.txt"
+        file = "..\..\Data\LR.train.txt"
 
         input = [
             features = [
@@ -60,7 +60,7 @@ Test = [
     action = "test"
 	reader = [
         readerType = "CNTKTextFormatReader"
-        file = "..\Data\LR.test.txt"
+        file = "..\..\Data\LR.test.txt"
         input = [
             features = [
                 dim = $dimension$
@@ -79,7 +79,7 @@ Output = [
     action = "write"
     reader = [
         readerType = "CNTKTextFormatReader"
-        file = "..\Data\LR.test.txt"
+        file = "..\..\Data\LR.test.txt"
         input = [
             features = [
                 dim = $dimension$  # $$ means variable substitution

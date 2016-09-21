@@ -1,4 +1,4 @@
-rootDir = "."
+rootDir = "D:\Kunder\inmeta\MeetupCNTK\CNTKMeetsTensorFlow\CNTK\MNIST"
 
 dataDir   = "$rootDir$/../../Data"
 modelDir  = "$rootDir$/Models"
@@ -11,7 +11,7 @@ modelPath = "$modelDir$/01_OneHidden"
 traceLevel = 1
 numMBsToShowResult = 500
 
-command = train:test:Output
+command = train:test:Output:doPlot
 
 #######################################
 #  TRAINING CONFIG                    #
@@ -41,7 +41,7 @@ train = [
 		MySigmoidLayer (inDim, outDim, x, parmScale) = Sigmoid (MyLinearLayer (inDim, outDim, x, parmScale))
         
         h1 = MySigmoidLayer (featDim,  hiddenDim, featScaled, 1)
-        z  = MyLinearLayer        (hiddenDim, labelDim, h1,         1)
+        z  = MyLinearLayer (hiddenDim, labelDim, h1, 1)
 		P = Softmax(z)
 
         ce   = CrossEntropy (labels, P)
@@ -106,7 +106,7 @@ test = [
     ]
 ]
 #######################################
-#  OUTPUT CONFIG                        #
+#  OUTPUT CONFIG                      #
 #######################################
 Output = [
     action = "write"
@@ -125,5 +125,22 @@ Output = [
         ]
     ]
     outputPath = "$rootDir$/01.out.txt"  # dump the output to this text file
+]
+#######################################
+#  PLOT CONFIG                        #
+#######################################
+doPlot = [
+    action = "plot"
+
+    # if the user does not specify this, it will be ${modelPath}.dot
+    outputdotFile = "oneHidden.dot" 
+
+    # outputFile specifies the rendered image
+    outputFile="oneHidden.jpg" 
+
+    # if RenderCmd is specified, CNTK will call the plot command after replacing
+    # <IN> with ${outputdotFile} and <OUT> with ${outputfile}
+    renderCmd="C:\Tools\Graphviz2.38\bin\dot.exe -Tjpg oneHidden.dot -o oneHidden.jpg"
+	#http://www.webgraphviz.com/
 ]
 
